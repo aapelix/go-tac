@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>aapelix/go-tac</title>
+        <style>
+            body {
+                background-color: #181818;
+                color: #ffffff;
+                font-family: "Arial", sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                padding: 0;
+            }
+
+            h1 {
+                margin-top: 20px;
+                font-size: 2.5em;
+                color: #4caf50;
+            }
+
+            #messages {
+                background-color: #282828;
+                border-radius: 10px;
+                padding: 20px;
+                height: 300px;
+                width: 80%;
+                overflow-y: scroll;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                margin-bottom: 20px;
+            }
+
+            #messageInput {
+                width: 80%;
+                padding: 10px;
+                border-radius: 5px;
+                border: none;
+                outline: none;
+                background-color: #444;
+                color: #fff;
+                font-size: 1em;
+                transition: background-color 0.3s;
+            }
+
+            #messageInput:focus {
+                background-color: #555;
+            }
+
+            #sendButton {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                background-color: #4caf50;
+                color: #fff;
+                font-size: 1em;
+                cursor: pointer;
+                transition: background-color 0.3s;
+                margin-top: 10px;
+            }
+
+            #sendButton:hover {
+                background-color: #45a049;
+            }
+
+            #sendButton:active {
+                background-color: #3e8e41;
+            }
+
+            p {
+                margin: 5px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>aapelix/go-tac</h1>
+        <div id="messages"></div>
+        <input type="text" id="messageInput" placeholder="Type a message..." />
+        <button id="sendButton">Send</button>
+
+        <script>
+            const ws = new WebSocket("ws://localhost:8080/ws");
+
+            fetch("/get-messages")
+                .then((response) => response.json())
+                .then((messages) => {
+                    if (messages == null) {
+                        return;
+                    }
+
+                    const messagesDiv = document.getElementById("messages");
+                    messages.forEach((msg) => {
+                        messagesDiv.innerHTML += `<p>${msg.content}</p>`;
+                    });
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                });
+
+            ws.onmessage = function (event) {
+                const messagesDiv = document.getElementById("messages");
+                messagesDiv.innerHTML += `<p>${event.data}</p>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            };
+
+            document.getElementById("sendButton").onclick = function () {
+                const messageInput = document.getElementById("messageInput");
+                if (messageInput.value) {
+                    ws.send(messageInput.value);
+                    messageInput.value = "";
+                }
+            };
+
+            document
+                .getElementById("messageInput")
+                .addEventListener("keypress", function (event) {
+                    if (event.key === "Enter") {
+                        document.getElementById("sendButton").click();
+                    }
+                });
+        </script>
+    </body>
+</html>
